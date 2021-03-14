@@ -1,0 +1,4 @@
+{
+    "tileserver_url": "https://tiles.map.com/",
+    "webhooks": ["discord.com/webhook", "discord.com/webhook"]
+}
