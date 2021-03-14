@@ -23,16 +23,6 @@ def get_webhook():
         pos[0] = 0
     return webhooks[pos[0]]
 
-def get_data(request):
-    data = {}
-    body_data = request.get_json()
-    if body_data:
-        data = body_data
-    arg_data = request.args
-    if arg_data:
-        data = {**data, **arg_data}
-    return data
-
 def test_vars(var):
     try:
         var = float(var)
@@ -45,9 +35,20 @@ def test_vars(var):
 
     return var
 
+def get_data(request):
+    data = {}
+    body_data = request.get_json()
+    if body_data:
+        data = body_data
+    arg_data = request.args
+    if arg_data:
+        arg_data = {k: test_vars(v) for k, v in arg_data.items()}
+        data = {**data, **arg_data}
+    return data
+
+
 def gen_staticmap(request, map_kind, template=None):
     data = get_data(request)
-    data = {k: test_vars(v) for k, v in data.items()}
 
     extra_template = ""
     if template:
