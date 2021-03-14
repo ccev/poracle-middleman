@@ -75,4 +75,4 @@ def templating(map_kind, template):
 def straight_map(map_kind):
     return gen_staticmap(request, map_kind)
 
-app.run(port=3031)
+app.run(port=config["port"])
