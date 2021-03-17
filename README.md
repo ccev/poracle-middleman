@@ -3,6 +3,7 @@
 - show nearby stops/gyms on staticmaps
 - hosts staticmaps on discord's cdn
 - supports templates, post/get requests, json input, url arg input, multistaticmaps - basically any kind of input your tileserver would also accept
+- since maps are hosted elsewhere, all requests happen locally and you to hide your tileserver url from your users and maybe even block outside requests to /staticmap and /multistaticmap completely
  
 if you're considering using this, i'm sure you know how to set this up. below are explained a few extra things to note
 
