@@ -1,17 +1,14 @@
 # tileserver-middleman
 
 - show nearby stops/gyms on staticmaps
-- hosts staticmaps on discord's cdn
+- hosts staticmaps on discord's cdn: faster loading & hiding your url
 - supports templates, post/get requests, json input, url arg input, multistaticmaps - basically any kind of input your tileserver would also accept
-- since maps are hosted elsewhere, all requests happen locally and you to hide your tileserver url from your users and maybe even block outside requests to /staticmap and /multistaticmap completely
  
-if you're considering using this, i'm sure you know how to set this up. below are explained a few extra things to note
+if you're considering using this, i'm sure you know how to set this up. just read the rest of the readme
 
-instead of filling in your tileserver URL in configs, you use the link to this middleman. (default: `http://127.0.0.1:3031`)
+instead of filling in your tileserver URL in other tool configs, you use the link to this middleman. (default: `http://127.0.0.1:3031`)
 
 for this to work the tool has to send a request to the middleman and use its response as the image URL. So if the tool is using pregenerate already, it should be easy to implement this.
-
-## Webhooks
 
 You can define a list of webhooks the script will cycle through. Usually one is enough but you can set multiple if you want.
 
@@ -53,11 +50,11 @@ To set this up, make sure that your marker list looks something like this:
 ],
 ```
 
-the part you have to add is marked with `/////`. You need an extra marker below (idealy the pokemon icon), else it will not work.
+the part you have to add is marked with `/////`. You need an extra marker below (ideally the pokemon icon), else it will not work.
 
-Now make sure that the request either has `lat/lon` or `latitude/longitude` keys and the `width`, `height` and `zoom` is defined within the template.
+Now make sure that the request either has `lat/lon` or `latitude/longitude` keys and `width`, `height` and `zoom` are defined within the template.
 
-and that's it. Templates that don't have this text will be ignored.
+and that's it. Templates that don't have this text will be ignored and just get hosted on discord.
 
 you can set a custom height/width for the stop/gym markers and adjust it to your template. just make sure that y_offset is half of that. You can also use your own icons by changing the url and have the file structure there look like [this](https://github.com/ccev/stopwatcher-icons/tree/master/tileserver-2)
 
