@@ -1,8 +1,11 @@
 from flask import Flask, request
 import requests
 import json
+import math
 from io import BytesIO
 import discord
+import pymysql
+import re
 
 with open("config.json", "r") as config_file:
     config = json.load(config_file)
@@ -25,15 +28,13 @@ def get_webhook():
 
 def test_vars(var):
     try:
-        var = float(var)
+        return float(var)
     except:
         pass
     try:
-        var = int(var)
+        return int(var)
     except:
         pass
-
-    return var
 
 def get_data(request):
     data = {}
@@ -46,9 +47,22 @@ def get_data(request):
         data = {**data, **arg_data}
     return data
 
+def get_key(key, text):
+    r = re.search(f"\"{key}\":( |)(\d*)", text)
+    return int(r.group(2))
 
-def gen_staticmap(request, map_kind, template=None):
+def gen_staticmap(request, map_kind, template_json=None, template=None):
     data = get_data(request)
+
+    if template_json:
+        kwargs = {}
+        kwargs["lat_center"] = data.get("lat", data.get("latitude", 0))
+        kwargs["lon_center"] = data.get("lon", data.get("longitude", 0))
+        kwargs["zoom"] = get_key("zoom", template_json)
+        kwargs["width"] = get_key("width", template_json)
+        kwargs["height"] = get_key("height", template_json)
+        #data["middleman_stops"] = get_stops(**kwargs)
+        data["middlejson"] = get_stops(**kwargs)
 
     extra_template = ""
     if template:
@@ -66,11 +80,106 @@ def gen_staticmap(request, map_kind, template=None):
 
     return message.attachments[0].url
 
+def point_to_lat(lat_center, lon_center, zoom, width, height, wanted_points):
+    # copied from https://help.openstreetmap.org/questions/75611/transform-xy-pixel-values-into-lat-and-long
+    C = (256 / (2*math.pi)) * 2**zoom
+
+    xcenter = C * (math.radians(lon_center) + math.pi)
+    ycenter = C * (math.pi - math.log(math.tan((math.pi/4) + math.radians(lat_center) / 2)))
+
+    xpoint = xcenter - (width / 2 - wanted_points[0])
+    ypoint = ycenter - (height / 2 - wanted_points[1])
+
+    C = (256 / (2 * math.pi)) * 2 ** zoom
+    M = (xpoint / C) - math.pi
+    N = -(ypoint / C) + math.pi
+
+    fin_lon = math.degrees(M)
+    fin_lat = math.degrees((math.atan(math.e**N)-(math.pi/4))*2)
+
+    return fin_lat, fin_lon
+
+def make_query(points, stop_type):
+    if stop_type == "pokestop":
+        type_ = "'stop'"
+    elif stop_type == "gym":
+        type_ = "team_id"
+    return f"""select latitude, longitude, {type_}
+    from {stop_type}
+    where   latitude >= {points[0]}
+    and     latitude <= {points[1]}
+    and     longitude >= {points[2]}
+    and     longitude <= {points[3]}
+    """
+
+def query_stops(lats, lons):
+    conn = pymysql.connect(
+        host=config["db_host"],
+        user=config["db_user"],
+        password=config["db_pass"],
+        database=config["db_name"],
+        port=config["db_port"],
+        autocommit=True
+    )
+    cursor = conn.cursor()
+
+    points = [
+        min(lats),
+        max(lats),
+        min(lons),
+        max(lons)
+    ]
+
+    stops = []
+    for stop_type in ["pokestop", "gym"]:
+        query = make_query(points, stop_type)
+        cursor.execute(query)
+        stops += list(cursor.fetchall())
+
+    cursor.close()
+    conn.close()
+    return stops
+
+def get_stops(**kwargs):
+    width, height = kwargs["width"], kwargs["height"]
+    lat1, lon1 = point_to_lat(**kwargs, wanted_points=(0, 0))
+    lat2, lon2 = point_to_lat(**kwargs, wanted_points=(width, height))
+
+    stops = query_stops([lat1, lat2], [lon1, lon2])
+    if len(stops) == 0:
+        return ""
+
+    stops = sorted(stops, key=lambda stop: (stop[0], stop[1]))
+
+    """markers = []
+    for lat, lon, stop_type in stops:
+        markers.append({
+            "url": f"https://raw.githubusercontent.com/ccev/stopwatcher-icons/master/tileserver-2/{stop_type}_grey.png",
+            "latitude": lat,
+            "longitude": lon,
+            "width": 48,
+            "height": 48,
+            "y_offset": -32
+        })
+
+    final_json = json.dumps(markers)
+    final_json = final_json.strip("[").strip("]") + ","
+    
+    return final_json
+    """
+    return stops
+
+
 app = Flask(__name__)
 
 @app.route('/<map_kind>/<template>', methods=['GET', 'POST'])
 def templating(map_kind, template):
-    return gen_staticmap(request, map_kind, template)
+    template_json = None
+    with open(config["templates_path"] + template + ".json", "r") as template_raw:
+        template_text = template_raw.read()
+        if "middlejson" in template_text:
+            template_json = template_text
+    return gen_staticmap(request, map_kind, template_json, template)
 
 @app.route('/<map_kind>', methods=['GET', 'POST'])
 def straight_map(map_kind):
