@@ -28,27 +28,27 @@ To set this up, make sure that your marker list looks something like this:
 
    /////////////////////////////////
 
-   "#if(middlejson != nil)":"#for(wp in middlejson)":{
-      "url":"https://raw.githubusercontent.com/ccev/stopwatcher-icons/master/tileserver-2/#index(wp, 2).png",
-      "latitude":"#index(wp",
-      0),
-      "longitude":"#index(wp",
-      1),
-      "width":20,
-      "height":20,
-      "y_offset":-10
+   #if(middlejson != nil):
+   #for(wp in middlejson):
+   {
+      "url": "https://raw.githubusercontent.com/ccev/stopwatcher-icons/master/tileserver-2/#index(wp, 2).png",
+      "latitude": "#index(wp",0),
+      "longitude": "#index(wp",1),
+      "width": 20,
+      "height": 20,
+      "y_offset": -10
    },
-   "#endfor
-   #endif"
+   #endfor
+   #endif
    
    /////////////////////////////////
    
    {
-      "url":"https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_#pad(pokemon_id, 3)_#if(form > 0):#(form)#else:00#endif.png",
-      "latitude":"#(latitude)",
-      "longitude":"#(longitude)",
-      "width":20,
-      "height":20
+      "url": "https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_#pad(pokemon_id, 3)_#if(form > 0):#(form)#else:00#endif.png",
+      "latitude": "#(latitude)",
+      "longitude":" #(longitude)",
+      "width": 20,
+      "height": 20
    }
 ],
 ```
@@ -58,4 +58,6 @@ the part you have to add is marked with `/////`. You need an extra marker below 
 Now make sure that the request either has `lat/lon` or `latitude/longitude` keys and the `width`, `height` and `zoom` is defined within the template.
 
 and that's it. Templates that don't have this text will be ignored.
+
+you can set a custom height/width for the stop/gym markers and adjust it to your template. just make sure that y_offset is half of that. You can also use your own icons by changing the url and have the file structure there look like [this](https://github.com/ccev/stopwatcher-icons/tree/master/tileserver-2)
 
