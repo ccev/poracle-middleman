@@ -29,8 +29,8 @@ To set this up, make sure that your marker list looks something like this:
    #for(wp in middlejson):
    {
       "url": "https://raw.githubusercontent.com/ccev/stopwatcher-icons/master/tileserver-2/#index(wp, 2).png",
-      "latitude": "#index(wp",0),
-      "longitude": "#index(wp",1),
+      "latitude": #index(wp, 0),
+      "longitude": #index(wp, 1),
       "width": 20,
       "height": 20,
       "y_offset": -10
