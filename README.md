@@ -42,8 +42,8 @@ To set this up, make sure that your marker list looks something like this:
    
    {
       "url": "https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_#pad(pokemon_id, 3)_#if(form > 0):#(form)#else:00#endif.png",
-      "latitude": "#(latitude)",
-      "longitude":" #(longitude)",
+      "latitude": #(latitude),
+      "longitude": #(longitude),
       "width": 20,
       "height": 20
    }
