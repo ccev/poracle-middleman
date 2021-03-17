@@ -10,6 +10,10 @@ instead of filling in your tileserver URL in configs, you use the link to this m
 
 for this to work the tool has to send a request to the middleman and use its response as the image URL. So if the tool is using pregenerate already, it should be easy to implement this.
 
+## Webhooks
+
+You can define a list of webhooks the script will cycle through. Usually one is enough but you can set multiple if you want.
+
 ## Nearby Stops
 
 ![](https://media.discordapp.net/attachments/546982390413787136/821835625979183174/unknown.png)
