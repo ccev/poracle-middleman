@@ -6,6 +6,7 @@ from io import BytesIO
 import discord
 import pymysql
 import re
+import time
 
 with open("config.json", "r") as config_file:
     config = json.load(config_file)
@@ -45,6 +46,15 @@ def get_data(request):
     if arg_data:
         arg_data = {k: test_vars(v) for k, v in arg_data.items()}
         data = {**data, **arg_data}
+
+    try:
+        data.pop("pregenerate")
+    except:
+        pass
+    try:
+        data.pop("regeneratable")
+    except:
+        pass
     return data
 
 def get_key(key, text):
@@ -52,6 +62,7 @@ def get_key(key, text):
     return int(r.group(2))
 
 def gen_staticmap(request, map_kind, template_json=None, template=None):
+    start = time.time()
     data = get_data(request)
 
     if template_json:
@@ -77,6 +88,8 @@ def gen_staticmap(request, map_kind, template_json=None, template=None):
     webhook = get_webhook()
     message = webhook.send(wait=True, file=discord.File(stream, filename="map.png"))
     stream.close()
+    stop = time.time()
+    print(f"Served tile in {stop-start} seconds")
 
     return message.attachments[0].url
 
@@ -147,7 +160,7 @@ def get_stops(**kwargs):
 
     stops = query_stops([lat1, lat2], [lon1, lon2])
     if len(stops) == 0:
-        return ""
+        return None
 
     stops = sorted(stops, key=lambda stop: (stop[0], stop[1]))
 
