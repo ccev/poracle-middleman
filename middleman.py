@@ -1,41 +1,46 @@
-from flask import Flask, request
-import requests
-import json
-import math
-from io import BytesIO
-import discord
-import pymysql
 import re
 import time
+import json
+import math
+import pymysql
+import discord
+import requests
+
+from io import BytesIO
+from flask import Flask, request
 
 with open("config.json", "r") as config_file:
     config = json.load(config_file)
 
-webhook_urls = config["webhooks"]
 webhooks = []
-for webhook_url in webhook_urls:
+for webhook_url in config["webhooks"]:
     webhook = discord.Webhook.from_url(
         url=webhook_url,
         adapter=discord.RequestsWebhookAdapter()
     )
     webhooks.append(webhook)
 
-pos = [0]
+pos = 0
+
+
 def get_webhook():
-    pos[0] += 1
-    if pos[0] > len(webhooks) - 1:
-        pos[0] = 0
-    return webhooks[pos[0]]
+    global pos
+    pos += 1
+    if pos > len(webhooks) - 1:
+        pos = 0
+    return webhooks[pos]
+
 
 def test_vars(var):
     try:
         return float(var)
-    except:
+    except ValueError:
         pass
     try:
         return int(var)
-    except:
+    except ValueError:
         pass
+
 
 def get_data(request):
     data = {}
@@ -49,30 +54,34 @@ def get_data(request):
 
     try:
         data.pop("pregenerate")
-    except:
+    except KeyError:
         pass
     try:
         data.pop("regeneratable")
-    except:
+    except KeyError:
         pass
+
     return data
+
 
 def get_key(key, text):
     r = re.search(f"\"{key}\":( |)(\d*)", text)
     return int(r.group(2))
+
 
 def gen_staticmap(request, map_kind, template_json=None, template=None):
     start = time.time()
     data = get_data(request)
 
     if template_json:
-        kwargs = {}
-        kwargs["lat_center"] = data.get("lat", data.get("latitude", 0))
-        kwargs["lon_center"] = data.get("lon", data.get("longitude", 0))
-        kwargs["zoom"] = get_key("zoom", template_json)
-        kwargs["width"] = get_key("width", template_json)
-        kwargs["height"] = get_key("height", template_json)
-        #data["middleman_stops"] = get_stops(**kwargs)
+        kwargs = {
+            "lat_center": data.get("lat", data.get("latitude", 0)),
+            "lon_center": data.get("lon", data.get("longitude", 0)),
+            "zoom": get_key("zoom", template_json),
+            "width": get_key("width", template_json),
+            "height": get_key("height", template_json)
+        }
+
         data["middlejson"] = get_stops(**kwargs)
 
     extra_template = ""
@@ -93,6 +102,7 @@ def gen_staticmap(request, map_kind, template_json=None, template=None):
 
     return message.attachments[0].url
 
+
 def point_to_lat(lat_center, lon_center, zoom, width, height, wanted_points):
     # copied from https://help.openstreetmap.org/questions/75611/transform-xy-pixel-values-into-lat-and-long
     C = (256 / (2*math.pi)) * 2**zoom
@@ -112,18 +122,21 @@ def point_to_lat(lat_center, lon_center, zoom, width, height, wanted_points):
 
     return fin_lat, fin_lon
 
+
 def make_query(points, stop_type):
     if stop_type == "pokestop":
         type_ = "'stop'"
     elif stop_type == "gym":
         type_ = "team_id"
-    return f"""select latitude, longitude, {type_}
-    from {stop_type}
-    where   latitude >= {points[0]}
-    and     latitude <= {points[1]}
-    and     longitude >= {points[2]}
-    and     longitude <= {points[3]}
-    """
+    return (
+        f"SELECT latitude, longitude, {type_} "
+        f"FROM {stop_type} "
+        f"WHERE latitude >= {points[0]} "
+        f"AND latitude <= {points[1]} "
+        f"AND longitude >= {points[2]} "
+        f"AND longitude <= {points[3]}"
+    )
+
 
 def query_stops(lats, lons):
     conn = pymysql.connect(
@@ -152,6 +165,7 @@ def query_stops(lats, lons):
     cursor.close()
     conn.close()
     return stops
+
 
 def get_stops(**kwargs):
     width, height = kwargs["width"], kwargs["height"]
@@ -185,6 +199,7 @@ def get_stops(**kwargs):
 
 app = Flask(__name__)
 
+
 @app.route('/<map_kind>/<template>', methods=['GET', 'POST'])
 def templating(map_kind, template):
     template_json = None
@@ -194,8 +209,10 @@ def templating(map_kind, template):
             template_json = template_text
     return gen_staticmap(request, map_kind, template_json, template)
 
+
 @app.route('/<map_kind>', methods=['GET', 'POST'])
 def straight_map(map_kind):
     return gen_staticmap(request, map_kind)
+
 
 app.run(port=config["port"])
