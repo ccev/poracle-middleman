@@ -176,7 +176,7 @@ def get_stops(**kwargs):
     if len(stops) == 0:
         return None
 
-    stops = sorted(stops, key=lambda stop: (stop[0], stop[1]))
+    stops = sorted(stops, key=lambda stop: (stop[0], stop[1]), reverse=True)
 
     """markers = []
     for lat, lon, stop_type in stops:
