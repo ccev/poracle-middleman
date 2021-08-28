@@ -10,4 +10,6 @@
     "templates_path": "/pogo/tileserver/Templates/",
 
     "webhooks": ["discord.com/webhook", "discord.com/webhook"]
+
+    "radar_grunts": false
 }
