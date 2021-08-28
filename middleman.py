@@ -125,11 +125,11 @@ def point_to_lat(lat_center, lon_center, zoom, width, height, wanted_points):
 
 def make_query(points, stop_type):
     if stop_type == "pokestop":
-        type_ = "'stop'"
+        search_columns_ = ""
     elif stop_type == "gym":
-        type_ = "team_id"
+        search_columns_ = ", team_id as 'teamId'"
     return (
-        f"SELECT latitude, longitude, {type_} "
+        f"SELECT latitude, longitude, '{stop_type}' as 'type'{search_columns_}"
         f"FROM {stop_type} "
         f"WHERE latitude >= {points[0]} "
         f"AND latitude <= {points[1]} "
@@ -145,7 +145,8 @@ def query_stops(lats, lons):
         password=config["db_pass"],
         database=config["db_name"],
         port=config["db_port"],
-        autocommit=True
+        autocommit=True,
+        cursorclass=pymysql.cursors.DictCursor
     )
     cursor = conn.cursor()
 
@@ -160,7 +161,7 @@ def query_stops(lats, lons):
     for stop_type in ["pokestop", "gym"]:
         query = make_query(points, stop_type)
         cursor.execute(query)
-        stops += list(cursor.fetchall())
+        stops += cursor.fetchall()
 
     cursor.close()
     conn.close()
@@ -176,7 +177,7 @@ def get_stops(**kwargs):
     if len(stops) == 0:
         return None
 
-    stops = sorted(stops, key=lambda stop: (stop[0], stop[1]), reverse=True)
+    stops = sorted(stops, key=lambda stop: (stop["latitude"], stop["longitude"]), reverse=True)
 
     """markers = []
     for lat, lon, stop_type in stops:
