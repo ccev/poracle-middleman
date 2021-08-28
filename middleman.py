@@ -125,9 +125,9 @@ def point_to_lat(lat_center, lon_center, zoom, width, height, wanted_points):
 
 def make_query(points, stop_type):
     if stop_type == "pokestop":
-        search_columns_ = ""
+        search_columns_ = ", active_fort_modifier as 'lureTypeId', incident_grunt_type as 'gruntTypeId'"
     elif stop_type == "gym":
-        search_columns_ = ", team_id as 'teamId'"
+        search_columns_ = ", team_id as 'teamId', slots_available as 'slotsAvailable'"
     return (
         f"SELECT latitude, longitude, '{stop_type}' as 'type'{search_columns_}"
         f"FROM {stop_type} "
@@ -167,6 +167,10 @@ def query_stops(lats, lons):
     conn.close()
     return stops
 
+def hide_radar_grunts(stop):
+    if stop["type"] == "pokestop" and stop["gruntTypeId"] in [41, 42, 43, 44, 45, 46]:
+        stop["gruntTypeId"] = 0
+    return stop
 
 def get_stops(**kwargs):
     width, height = kwargs["width"], kwargs["height"]
@@ -176,6 +180,9 @@ def get_stops(**kwargs):
     stops = query_stops([lat1, lat2], [lon1, lon2])
     if len(stops) == 0:
         return None
+
+    if "radar_grunts" not in config or config["radar_grunts"] == False:
+        stops = list(map(hide_radar_grunts, stops))
 
     stops = sorted(stops, key=lambda stop: (stop["latitude"], stop["longitude"]), reverse=True)
 
