@@ -1,3 +1,10 @@
+## This repo is no longer maintained
+
+Due to a lack of motivation and time, I've decided to archive most of my repos.
+
+At the time of writing this it should be fine to use. I didn't have any further plans for it. Just the code is a bit ugly as I've scrampled it together pretty quickly
+
+
 # tileserver-middleman
 
 - show nearby stops/gyms on staticmaps
