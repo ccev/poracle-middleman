@@ -18,7 +18,6 @@ class Geocoder(BaseModel):
 class Tileserver(BaseModel):
     enable: bool = False
     url: str = ""
-    templates_path: str = ""
     webhooks: list[str] = []
     replace: dict[str, str] = {}
 

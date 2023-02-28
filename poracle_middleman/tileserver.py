@@ -32,16 +32,6 @@ class Tileserver:
 
         return message.attachments[0].url
 
-    def get_template_data(self, name: str) -> str:
-        data = self.templates.get(name)
-
-        if not data:
-            with open(config.tileserver.templates_path, "r", encoding="utf-8") as f:
-                data = f.read()
-            self.templates[name] = data
-
-        return data
-
     async def handle_request(self, request: web.Request, template_name: str | None = None) -> web.Response:
         if not self.webhooks and config.tileserver.webhooks:
             await self.prepare()
