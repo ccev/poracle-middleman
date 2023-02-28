@@ -54,7 +54,6 @@ You can use the provided `files/` directory. Make sure that these GeoJSONs
 only consist of Polygons that have a `name` property. 
 If you provide invalid GeoJSONs you'll get an error on start.
 - In your Poracle config, set this:
-- 
 ```json
 {
     "geocoding": {
