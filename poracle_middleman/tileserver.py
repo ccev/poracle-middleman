@@ -54,6 +54,12 @@ class Tileserver:
         if request.body_exists:
             body = await request.json()
             data.update(body)
+
+        data.update({
+            "pregenerate": False,
+            "regeneratable": False
+        })
+
         map_kind = request.match_info["map_kind"]
 
         url = urljoin(config.tileserver.url, map_kind)
