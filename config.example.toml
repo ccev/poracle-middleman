@@ -1,0 +1,18 @@
+host = "127.0.0.1"
+port = 3031
+
+[tileserver]
+enable = false
+url = "http://tiles.map.com"
+templates_path = "/tileserver/Templates"
+webhooks = [
+    "https://discord.com/webhook/1",
+    "https://discord.com/webhook/2"
+]
+
+[geocoder]
+enable = false
+language = "en"
+#mapbox_key = ""
+#suburb_geojson = "suburbs.json"
+#poi_geojson = "poi.json"

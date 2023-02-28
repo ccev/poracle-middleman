@@ -3,6 +3,8 @@ config.json
 venv
 .idea
 *test*
+files/*
+cinfig.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
