@@ -136,8 +136,8 @@ class Geocoder:
                     "county": "",
                     "state": "",
                     "postcode": "",
-                    "country": "",
-                    "country_code": "",
+                    "country": "-",
+                    "country_code": "-",
                 },
             }
         )
