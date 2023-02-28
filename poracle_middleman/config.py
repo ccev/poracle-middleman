@@ -20,6 +20,7 @@ class Tileserver(BaseModel):
     url: str = ""
     templates_path: str = ""
     webhooks: list[str] = []
+    replace: dict[str, str] = {}
 
 
 class Config(BaseModel):

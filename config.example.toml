@@ -10,6 +10,10 @@ webhooks = [
     "https://discord.com/webhook/2"
 ]
 
+[tileserver.replace]
+"requested_name" = "new_name"
+
+
 [geocoder]
 enable = false
 language = "en"

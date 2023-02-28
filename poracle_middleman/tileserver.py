@@ -61,17 +61,24 @@ class Tileserver:
 
             data[key] = value
 
-        body = await request.json()
-        data.update(body)
+        if request.body_exists:
+            body = await request.json()
+            data.update(body)
         map_kind = request.match_info["map_kind"]
 
-        async with ClientSession() as session:
-            async with session.post(urljoin(config.tileserver.url, map_kind), json=data) as resp:
-                response = await resp.read()
-                status = resp.status
+        url = urljoin(config.tileserver.url, map_kind)
+        if template_name:
+            if template_name in config.tileserver.replace:
+                template_name = config.tileserver.replace[template_name]
+            url += "/" + template_name
 
-        if status >= 400 or not self.webhooks:
-            return web.Response(body=response, status=status)
+        async with ClientSession() as session:
+            async with session.post(url, json=data) as resp:
+                if resp.status >= 400 or not self.webhooks:
+                    body = await resp.read()
+                    return web.Response(body=body, status=resp.status, headers=resp.headers)
+
+                response = await resp.read()
 
         url = await self.upload_image(response)
 
