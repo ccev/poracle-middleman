@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
+from enum import Enum
 
 import aiohttp
-from aiohttp import web
-from .config import config
-from pydantic import BaseModel, ValidationError, Field, create_model
-from enum import Enum
-from dataclasses import dataclass
 import shapely
+from aiohttp import web
+from pydantic import BaseModel, ValidationError, Field
+
+from .config import config
 from .geojson_models import PolygonGeojson
 
 

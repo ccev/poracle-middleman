@@ -1,67 +1,69 @@
-## This repo is no longer maintained
+# Poracle Middleman
 
-Due to a lack of motivation and time, I've decided to archive most of my repos.
+I wasn't satisfied with the way Static Maps and reverse 
+geocoding works in Poracle, so I made this. 
+Everything here is very opiniated. If you agree with my 
+opinion, feel free to use this.
 
-At the time of writing this it should be fine to use. I didn't have any further plans for it. Just the code is a bit ugly as I've scrampled it together pretty quickly
+# Features
 
+## Tileserver Middleman
 
-# tileserver-middleman
+- Host Static Maps on the Discord CDN
+- Replace hardcoded template names with your own names
 
-- show nearby stops/gyms on staticmaps
-- hosts staticmaps on discord's cdn: faster loading & hiding your url
-- supports templates, post/get requests, json input, url arg input, multistaticmaps - basically any kind of input your tileserver would also accept
- 
-if you're considering using this, i'm sure you know how to set this up. just read the rest of the readme
+## Reverse Geocoding Middleman
 
-instead of filling in your tileserver URL in other tool configs, you use the link to this middleman. (default: `http://127.0.0.1:3031`)
+- Use Mapbox with public Nominatim as a fallback
+- Produces a hardcoded format: `Suburb: Streetname 10, City` 
+or if there's no suburb: `City: Streetname 10`
+- Provide your own GeoJSON to overwrite suburb data
+- Provide your own GeoJSON with POIs. 
+Format if a POI exists: `Suburb POI: Streetname 10, City`
 
-for this to work the tool has to send a request to the middleman and use its response as the image URL. So if the tool is using pregenerate already, it should be easy to implement this.
+# Setup
 
-You can define a list of webhooks the script will cycle through. Usually one is enough but you can set multiple if you want.
+- `cp config.example.toml config.toml`
+- [Install Poetry](https://python-poetry.org/docs/#installation)
+- `poetry install` once and then `poetry run middleman` to start
+- You can get the Python executable with `poetry env info`
 
-## Nearby Stops
+## Tileserver
 
-![](https://media.discordapp.net/attachments/546982390413787136/821835625979183174/unknown.png)
+- Config should be self-explainatory. `tileserver.replace` can look something like this:
 
-Above is an example for how it would look with [my template](https://gist.github.com/ccev/47b6de2a2f4578a06d14058f323ba0ba). Note that for multistaticmaps, it can only put stops/gyms on the very first map in the list.
-
-To set this up, make sure that your marker list looks something like this:
-
-```js
-"markers": [
-
-   /////////////////////////////////
-
-   #if(middlejson != nil):
-   #for(wp in middlejson):
-   {
-      "url": "https://raw.githubusercontent.com/ccev/stopwatcher-icons/master/tileserver-2/#index(wp, 2).png",
-      "latitude": #index(wp, 0),
-      "longitude": #index(wp, 1),
-      "width": 20,
-      "height": 20,
-      "y_offset": -10
-   },
-   #endfor
-   #endif
-   
-   /////////////////////////////////
-   
-   {
-      "url": "https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_#pad(pokemon_id, 3)_#if(form > 0):#(form)#else:00#endif.png",
-      "latitude": #(latitude),
-      "longitude": #(longitude),
-      "width": 20,
-      "height": 20
-   }
-],
+```toml
+[tileserver.replace]
+"poracle-multi-monster" = "your-template-name"
+"poracle-areaoverview" = "your-areoverview"
 ```
 
-the part you have to add is marked with `/////`. You need an extra marker below (ideally the pokemon icon), else it will not work.
+- In your Poracle config, set this:
 
-Now make sure that the request either has `lat/lon` or `latitude/longitude` keys and `width`, `height` and `zoom` are defined within the template.
+```json
+{
+    "staticProvider": "tileservercache",
+    "staticProviderURL": "http://127.0.0.1:3031/tileserver"
+}
+```
 
-and that's it. Templates that don't have this text will be ignored and just get hosted on discord.
+## Geocoding
 
-you can set a custom height/width for the stop/gym markers and adjust it to your template. just make sure that y_offset is half of that. You can also use your own icons by changing the url and have the file structure there look like [this](https://github.com/ccev/stopwatcher-icons/tree/master/tileserver-2)
-
+- `suburb_geojson` and `poi_geojson` have to be paths to valid GeoJSON files. 
+You can use the provided `files/` directory. Make sure that these GeoJSONs 
+only consist of Polygons that have a `name` property. 
+If you provide invalid GeoJSONs you'll get an error on start.
+- In your Poracle config, set this:
+- 
+```json
+{
+    "geocoding": {
+        "provider": "nominatim",
+        "providerURL": "http://127.0.0.1:3031/geocoder/"
+    },
+    "locale": {
+        "addressFormat": "{{formattedAddress}}"
+    }
+}
+```
+- In your Poracle DTS, you can use `{{{addr}}}` to get the correct address

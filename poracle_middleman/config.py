@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-from enum import Enum
 
 import rtoml
 from pydantic import BaseModel, ValidationError

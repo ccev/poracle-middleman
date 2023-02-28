@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from .config import config
-from aiohttp import web, ClientSession, ClientResponse
-from discord import Webhook, File, WebhookMessage
 from io import BytesIO
 from urllib.parse import urljoin
+
+from aiohttp import web, ClientSession
+from discord import Webhook, File
+
+from .config import config
 
 
 class Tileserver:
     def __init__(self):
         self.index: int = 0
         self.webhooks: list[Webhook] = []
-        self.templates: dict[str, str] = {}
 
     async def prepare(self):
         self.webhooks = [Webhook.from_url(u, session=ClientSession()) for u in config.tileserver.webhooks]
@@ -55,10 +56,7 @@ class Tileserver:
             body = await request.json()
             data.update(body)
 
-        data.update({
-            "pregenerate": False,
-            "regeneratable": False
-        })
+        data.update({"pregenerate": False, "regeneratable": False})
 
         map_kind = request.match_info["map_kind"]
 
