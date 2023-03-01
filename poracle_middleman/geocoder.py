@@ -138,7 +138,7 @@ class Geocoder:
                     "state": "",
                     "postcode": "",
                     "country": "",
-                    "country_code": "--",
+                    "country_code": "de",
                 },
             }
         )
