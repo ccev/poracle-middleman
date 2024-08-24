@@ -10,6 +10,7 @@ class Geocoder(BaseModel):
     enable: bool = False
     language: str = "en"
     mapbox_key: str | None = None
+    nominatim_endpoint: str = "https://nominatim.openstreetmap.org/"
     suburb_geojson: str | None = None
     poi_geojson: str | None = None
 

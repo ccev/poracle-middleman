@@ -18,5 +18,6 @@ webhooks = [
 enable = false
 language = "en"
 #mapbox_key = ""
+#nominatim_endpoint = "http://127.0.0.1:8080/"
 #suburb_geojson = "suburbs.json"
 #poi_geojson = "poi.json"

@@ -24,14 +24,27 @@ class Address:
         return bool(self.street)
 
     def get_full(self) -> str:
-        street = ": " + self.street if self.street else ""
-        city = self.city if self.city else ""
-        poi = " " + self.poi if self.poi else ""
-
+        parts: list[str] = []
         if self.suburb:
-            return f"{self.suburb}{poi}{street}, {city}"
-        else:
-            return f"{city}{poi}{street}"
+            parts.append(self.suburb)
+        if self.poi:
+            parts.append(self.poi)
+
+        if not self.suburb and not self.poi and self.city:
+            parts.append(self.city)
+
+        if parts:
+            parts[-1] += ":"
+
+        if self.street:
+            parts.append(self.street)
+
+        if self.city and self.city not in parts:
+            if self.street:
+                parts[-1] += ","
+            parts.append(self.city)
+
+        return " ".join(parts)
 
 
 @dataclass
@@ -109,7 +122,10 @@ class Geocoder:
         lat = get_coord("lat")
         lon = get_coord("lon")
 
-        addr = await self.query_mapbox(lat, lon)
+        addr = Address()
+        if config.geocoder.mapbox_key:
+            addr = await self.query_mapbox(lat, lon)
+
         if not addr:
             addr = await self.query_nominatim(lat, lon, addr)
 
@@ -190,7 +206,11 @@ class Geocoder:
         return address
 
     async def query_nominatim(self, lat: float, lon: float, addr: Address) -> Address:
-        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept_language=de"
+        url = (
+            f"{config.geocoder.nominatim_endpoint}reverse?"
+            f"lat={lat}&lon={lon}&format=json"
+            f"&accept_language={config.geocoder.language}"
+        )
 
         raw = await self._query(url)
         if raw is None:
