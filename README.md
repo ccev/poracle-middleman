@@ -15,11 +15,11 @@ opinion, feel free to use this.
 ## Reverse Geocoding Middleman
 
 - Supports Mapbox, self-hosted nominatim, public nominatim
-  - Each service is used as a fallback, they're queries until one gives data
+  - Each service is used as a fallback, they're queried until one gives data
 - Produces a hardcoded format: `Suburb: Streetname 10, City` 
 or if there's no suburb: `City: Streetname 10`
 - Provide your own GeoJSON to overwrite suburb data
-- Provide your own GeoJSON with POIs. 
+- Provide your own GeoJSON with POIs
 Format if a POI exists: `Suburb POI: Streetname 10, City`
 
 # Setup
