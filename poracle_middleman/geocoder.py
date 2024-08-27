@@ -19,6 +19,7 @@ class Address:
     suburb: str | None = None
     city: str | None = None
     poi: str | None = None
+    auto_full: str | None = None
 
     def __bool__(self) -> bool:
         return bool(self.street)
@@ -33,8 +34,7 @@ class Address:
         if not self.suburb and not self.poi and self.city:
             parts.append(self.city)
 
-        if parts:
-            parts[-1] += ":"
+        colons_at = len(parts) - 1
 
         if self.street:
             parts.append(self.street)
@@ -43,6 +43,12 @@ class Address:
             if self.street:
                 parts[-1] += ","
             parts.append(self.city)
+
+        if colons_at >= 0:
+            parts[colons_at] += ":"
+
+        if not parts and self.auto_full:
+            parts = self.auto_full.split(" ")
 
         return " ".join(parts)
 
@@ -72,11 +78,65 @@ class MapboxResponse(BaseModel):
 class NomiAddress(BaseModel):
     house_number: str | None
     road: str | None
-    suburb: str | None = Field(alias="city_district")
+
+    # city
     city: str | None
+    town: str | None
+    village: str | None
+    municipality: str | None
+    county: str | None
+    region: str | None
+    state_district: str | None
+
+    # suburbs
+    hamlet: str | None
+    croft: str | None
+    isolated_dwelling: str | None
+    suburb: str | None
+    city_district: str | None
+    district: str | None
+    borough: str | None
+    subdivision: str | None
+    neighbourhood: str | None
+    allotments: str | None
+    quarter: str | None
+
+    def best_city(self) -> str:
+        for option in [
+            self.city,
+            self.town,
+            self.village,
+            self.municipality,
+            self.county,
+            self.region,
+            self.state_district,
+        ]:
+            if option:
+                return option
+        return ""
+
+    def best_suburb(self) -> str:
+        city = self.best_city()
+        for option in [
+            self.hamlet,
+            self.croft,
+            self.isolated_dwelling,
+            self.suburb,
+            self.city_district,
+            self.district,
+            self.borough,
+            self.subdivision,
+            self.neighbourhood,
+            self.allotments,
+            self.quarter,
+        ]:
+            if option and option != city:
+                return option
+        return ""
 
 
 class NomiResponse(BaseModel):
+    display_name: str
     address: NomiAddress
 
 
@@ -160,13 +220,13 @@ class Geocoder:
         )
 
     @staticmethod
-    async def _query(url) -> dict | list | None:
+    async def _query(url, auth: aiohttp.BasicAuth | None = None) -> dict | list | None:
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url) as resp:
+                async with session.get(url, auth=auth) as resp:
                     return await resp.json()
         except Exception as e:
-            print(f"Exception while fetching Mapbox: {e}")
+            print(f"Exception while querying geocoding: {e}")
             return None
 
     async def query_mapbox(self, lat: float, lon: float) -> Address:
@@ -206,15 +266,18 @@ class Geocoder:
         return address
 
     async def query_nominatim(self, lat: float, lon: float, addr: Address) -> Address:
-        url = (
-            f"{config.geocoder.nominatim_endpoint}reverse?"
-            f"lat={lat}&lon={lon}&format=json"
-            f"&accept_language={config.geocoder.language}"
-        )
+        params = f"reverse?lat={lat}&lon={lon}&format=json&accept_language={config.geocoder.language}"
 
-        raw = await self._query(url)
+        raw = await self._query(
+            config.geocoder.nominatim_endpoint + params, auth=aiohttp.BasicAuth(*config.geocoder.nominatim_auth)
+        )
         if raw is None:
             return addr
+
+        if raw.get("error") and "nominatim.openstreetmap.org" not in config.geocoder.nominatim_endpoint:
+            raw = await self._query("https://nominatim.openstreetmap.org/" + params)
+            if raw is None:
+                return addr
 
         try:
             data = NomiResponse(**raw)
@@ -227,9 +290,12 @@ class Geocoder:
 
             if data.address.house_number:
                 addr.street += " " + data.address.house_number
-        if data.address.suburb:
-            addr.suburb = data.address.suburb
-        if data.address.city:
-            addr.city = data.address.city
+
+        if city := data.address.best_city():
+            addr.city = city
+        if suburb := data.address.best_suburb():
+            addr.suburb = suburb
+        if data.display_name:
+            addr.auto_full = data.display_name
 
         return addr

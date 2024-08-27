@@ -11,6 +11,7 @@ class Geocoder(BaseModel):
     language: str = "en"
     mapbox_key: str | None = None
     nominatim_endpoint: str = "https://nominatim.openstreetmap.org/"
+    nominatim_auth: tuple[str, str] | None = None
     suburb_geojson: str | None = None
     poi_geojson: str | None = None
 
